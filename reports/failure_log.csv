@@ -1,0 +1,7 @@
+ID,Input,Expected,Got,Category,Root-cause hypothesis,Action,Status
+VAL-001,Your email password expires in 24 hours. Click here to keep the same password and avoid losing access.,Phishing,Identity Fraud,type confusion,TO REVIEW,,OPEN
+VAL-002,We could not deliver your parcel. Update your delivery address using this link within 48 hours or it will be returned.,Phishing,Benign,FN,TO REVIEW,,OPEN
+VAL-003,Your mobile wallet transaction is pending. Reply with your PIN to release the funds.,Financial Scam,Identity Fraud,type confusion,TO REVIEW,,OPEN
+VAL-004,"Earn daily income from home, no experience needed. Pay a registration fee to begin.",Financial Scam,AI-Enabled Threat,type confusion,TO REVIEW,,OPEN
+VAL-005,An audio clip that sounds like your relative says they are in trouble and need money sent right now.,AI-Enabled Threat,Financial Scam,type confusion,TO REVIEW,,OPEN
+TEST-006,Verify it is you: send the six-digit code you received and your surname.,Identity Fraud,Financial Scam,type confusion,TO REVIEW,,OPEN

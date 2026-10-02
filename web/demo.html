@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attack Replay — Cyber Shield Zimbabwe (demo)</title>
+<style>
+:root{--bg:#0b1020;--p:#141b33;--p2:#1c2547;--tx:#e8ecf8;--mu:#93a0c4;--ac:#5eead4;--hi:#f87171;--md:#fbbf24;--lo:#4ade80;--bd:#2a3563}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+header{padding:16px 22px;border-bottom:1px solid var(--bd)}h1{margin:0;font-size:22px}h1 span{color:var(--ac)}
+.pitch{color:var(--mu);font-size:13px;margin-top:2px}.chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chips b{font-size:11px;padding:2px 8px;border:1px solid var(--bd);border-radius:20px;color:var(--ac);letter-spacing:.5px}
+nav{display:flex;gap:4px;padding:8px 22px;border-bottom:1px solid var(--bd)}nav button{background:none;border:0;color:var(--mu);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+nav button.on{background:var(--p2);color:var(--tx)}main{max-width:1000px;margin:0 auto;padding:18px}
+.card{background:var(--p);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--mu)}
+textarea{width:100%;min-height:84px;background:#0e1430;color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:10px;font:inherit;resize:vertical}
+button.b{background:var(--ac);color:#062;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}button.g{background:var(--p2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}.mu{color:var(--mu);font-size:13px}
+.pill{display:inline-block;padding:3px 12px;border-radius:20px;font-weight:700;font-size:13px}
+.High{background:#7f1d1d;color:#fecaca}.Medium{background:#78350f;color:#fde68a}.Low{background:#14532d;color:#bbf7d0}.sus{background:#7f1d1d;color:#fecaca}.ok{background:#14532d;color:#bbf7d0}
+.big{font-size:17px;margin:8px 0 4px}mark{background:hsl(var(--h) 80% 45%/.35);color:inherit;border-bottom:2px solid hsl(var(--h) 80% 55%);border-radius:3px;padding:0 1px}
+.msg{background:#0e1430;border-radius:8px;padding:10px;font-size:16px}.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{border:1px solid hsl(var(--h) 60% 50%);border-radius:8px;padding:3px 9px;font-size:13px}.tag.absent{opacity:.35;border-color:var(--bd)}.tag i{font-style:normal;color:var(--mu);font-size:11px;margin-left:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.chain{display:flex;gap:6px;margin:6px 0}.st{flex:1;padding:8px;border:1px solid var(--bd);border-radius:8px;text-align:center;font-size:12px;color:var(--mu)}.st.on{border-color:var(--ac);color:var(--tx);background:var(--p2);font-weight:700}.st.done{color:var(--tx)}
+.rec{padding:8px 10px;border-radius:8px;font-size:13px;margin-top:8px}.r0{background:#14532d}.r1{background:#78350f}.r2{background:#7f1d1d}
+.detail{background:#0e1430;border-left:3px solid var(--ac);padding:10px;border-radius:6px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}th{color:var(--mu);font-weight:600}
+.warn{background:#3b1d1d;border:1px solid #7f1d1d;padding:8px 10px;border-radius:8px;margin-top:8px;font-size:13px}
+ul{margin:6px 0;padding-left:20px}label{display:block;margin:4px 0;font-size:14px}.hide{display:none}
+</style></head><body>
+<header><h1>Attack Replay <span>· Cyber Shield Zimbabwe</span></h1>
+<div class="pitch">We don't just tell you it's a scam. We let you watch it play out, safely, and show you what you can still undo.</div>
+<div class="chips"><b>DETECT</b><b>EXPLAIN</b><b>REPLAY</b><b>INTERRUPT</b><b>RECOVER</b><b>OFFLINE · DETERMINISTIC · NOTHING FETCHED OR SENT</b></div></header>
+<nav><button class="on" data-t="a">Analyze</button><button data-t="r">Evasion Arena</button><button data-t="c">Batch (CSV)</button></nav>
+<main>
+<section id="a">
+<div class="card"><h3>Paste a suspicious message — or what already happened</h3>
+<textarea id="in" placeholder="Paste an SMS / email / voice-note transcript…"></textarea>
+<div class="row"><button class="b" id="go">Analyze</button><span class="mu">Try:</span>
+<button class="g" data-p="URGENT: Your payment has failed. Send your PIN within 30 minutes so that our agent can reverse the transaction.">DEMO-01 PIN scam</button>
+<button class="g" data-p="This voice message from your manager asks you to urgently transfer money to a new account.">AI voice</button>
+<button class="g" data-p="Click http://example.invalid/security-check to restore your account immediately.">Malicious link</button>
+<button class="g" data-p="Your appointment at the clinic is confirmed for Tuesday at 10:00. Please bring your identification.">Benign</button>
+<button class="g" data-p="I already sent the money after they said my payment failed.">DEMO-INC</button></div></div>
+<div id="out"></div></section>
+<section id="r" class="hide"><div class="card"><h3>Evasion Arena — we attack our own detector</h3>
+<p class="mu">Seeds are the 10 scam messages in the released dataset (in-sample) plus 4 benign controls. Mutated versions run through the detector <b>before</b> and <b>after</b> the normalization patch. "Leetspeak" is a held-out mutation the patch was not built for. Numbers are computed live by this demo engine, not from a trained model.</p>
+<button class="b" id="arena">Run Arena</button><div id="arout"></div></div></section>
+<section id="c" class="hide"><div class="card"><h3>/batch — CSV in → CSV out (label, type, risk, explanation, action)</h3>
+<p class="mu">Needs a column named <code>content</code>, <code>text</code> or <code>message</code>. Runs entirely in the browser.</p>
+<input type="file" id="f" accept=".csv"><textarea id="csv" placeholder="…or paste CSV here"></textarea>
+<div class="row"><button class="b" id="bt">Run batch</button><button class="g" id="dl" disabled>Download results.csv</button></div><div id="bout"></div></div></section>
+</main>
+<script>
+const $=i=>document.getElementById(i),E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const HG={'а':'a','е':'e','о':'o','р':'p','с':'c','х':'x','і':'i','ѕ':'s'};
+const TAC={urgency:['Urgency',30,/\b(urgent(ly)?|immediately|now|today|within \d+ \w+|asap)\b/],
+authority:['Authority',210,/\b(your manager|public official|our agent|your bank|security team|your account|your mailbox)\b/],
+fear:['Fear / loss',0,/\b(suspended|disabled|blocked|locked|penalt\w+|arrest\w*)\b/],
+reward:['Reward / lure',140,/\b(won|prize|congratulations|refund|reward|payment programme|outstanding payment)\b/],
+secrecy:['Secrecy',280,/\b(don'?t tell|keep (this )?secret|tell no one|confidential)\b/],
+credential:['Credential request',330,/\b(pin|otp|password|national id( number)?|sign in|verify your details|personal details|account details|mobile money details)\b/],
+payment:['Payment request',50,/(transfer money|send (the )?money|reverse the transaction|payment (has )?failed|new account)/],
+cta:['Call to action',180,/\b(click|reply|download|send|verify|sign in|call|install|transfer|update)\b/],
+link:['Suspicious link',260,null],synth:['Synthetic media cue',300,/(voice message|video appears|appears to show|voice note)/]};
+const CL=[['AI-Enabled Threat',[[/(voice message|video appears|appears to show|voice note)/,4]]],
+['Malicious Link',[[/attached document|attachment/,2.5]]],
+['Identity Fraud',[[/password/,2],[/national id/,2],[/\botp\b/,2],[/account details/,2],[/personal details/,2]]],
+['Financial Scam',[[/\bpin\b/,2],[/\bwon\b|prize/,2],[/mobile money/,2],[/reverse the/,2],[/transfer money|send (the )?money/,2],[/refund/,2]]],
+['Phishing',[[/suspended|disabled/,2],[/verify your details/,2],[/sign in/,2],[/link below/,2],[/storage is full/,2]]]];
+const ACT={'Phishing':"Do not click the link. Verify through the organisation's official channel.",'Financial Scam':'Do not provide financial information. Verify the promotion independently. Never share a PIN.','Identity Fraud':'Do not share credentials or identity information. Verify the request independently.','AI-Enabled Threat':'Verify the request using an independent communication channel.','Malicious Link':'Do not open the link. Use the official service website.','Benign':'No action required beyond normal verification habits.'};
+const ASK=[[/\botp\b/,3,'your OTP'],[/\bpin\b/,3,'your PIN'],[/national id/,3,'your national ID'],[/transfer money|send (the )?money|reverse the transaction/,3,'money'],[/mobile money details|personal details/,3,'your financial/personal details'],[/sign in|verify your details/,3,'your login details'],[/password/,2,'your password'],[/account details/,2,'your account details'],[/attached document|attachment/,2,'you to open an attachment']];
+function analyze(raw,N=true){let s='',m=[];
+for(let i=0;i<raw.length;i++){let c=raw[i];if(N){if(/[\u200b-\u200d\u2060\ufeff]/.test(c))continue;c=HG[c]||c}for(const ch of c.toLowerCase()){s+=ch;m.push(i)}}
+const U=N?/h(?:tt|xx)ps?:\/\/[^\s]+/:/https?:\/\/[^\s]+/,hasU=U.test(s);
+const sc={};let best='Benign',bs=0;
+for(const[n,rs]of CL){let v=0;for(const[r,w]of rs)if(r.test(s))v+=w;if(n=='Malicious Link'&&hasU)v+=3;sc[n]=v;if(v>bs){bs=v;best=n}}
+const susp=bs>=2,type=susp?best:'Benign';
+const dna=[],ch=new Array(raw.length).fill(null);
+for(const[k,[nm,h,re]]of Object.entries(TAC)){const g=new RegExp((k=='link'?U:re).source+(k=='link'?'|attached document|attachment':''),'g');let n=0,ev=[];let x;
+while((x=g.exec(s))){n++;ev.push(raw.slice(m[x.index],m[x.index+x[0].length-1]+1));for(let j=x.index;j<x.index+x[0].length;j++)if(ch[m[j]]===null||(n>1&&false))ch[m[j]]=k;if(!x[0].length)g.lastIndex++}
+dna.push({k,nm,h,st:n>1?'strong':n?'present':'absent',ev:[...new Set(ev)]})}
+let irr=0,ask=null;for(const[r,v,l]of ASK)if(r.test(s)&&v>irr){irr=v;ask=l}if(hasU&&irr<3){irr=3;ask='a click on a link'}
+const lik=Math.min(1,bs/4),risk=!susp?'Low':(irr>=3&&lik>=.5?'High':'Medium');
+const reason=!susp?"No request for secrets, money or links — looks routine. If unsure, confirm through the official channel.":`Likely ${type.toLowerCase()}${ask?`, and it asks for ${ask} — ${irr>=3?"something you can't undo":"something you can recover if you act fast"}`:''}.`;
+const ents={urls:(raw.match(/h(?:tt|xx)ps?:\/\/[^\s]+/gi)||[]).map(u=>u.replace(/hxxp/i,'http').replace(/\[\.\]/g,'.')),amounts:raw.match(/US\$\s?\d+|\$\s?\d+/gi)||[],phones:raw.match(/\+?\d[\d ]{8,}\d/g)||[],sector:/mobile money|pin\b|wallet/.test(s)?'Mobile money':/mailbox|account|portal/.test(s)?'Account / online service':/manager|official/.test(s)?'Employer / government':'—'};
+return{susp,type,risk,lik,irr,ask,dna,ch,reason,action:ACT[type],ents,raw}}
+/* incident */
+const INC=[[/\bi (already |just )?(sent|paid|transferred|wired)\b[^.]{0,25}(money|cash|funds|\$\d+|them)/,'Money already sent',3,'Financial Scam',["Call your mobile-money provider or bank NOW — use the number on their official app or card, not one from the message.","Ask them to flag or stop the transaction; write down the reference.","Do not send anything more, even if pressured or promised a refund.","Report to the provider and the police (local procedures: TO BE VERIFIED)."]],
+[/\bi (already |just )?(gave|shared|entered|sent|told|typed)\b[^.]{0,25}(otp|pin|password|code|details)/,'Credentials already shared',2,'Identity Fraud',["Change your PIN/password through the official service — open it yourself, not via the message.","Log out of other sessions/devices; enable two-step verification.","Call your provider on an official number and watch for transactions you did not make.","Warn contacts if the account could be used to message them."]],
+[/\bi (already |just )?(clicked|opened|tapped|downloaded)/,'Link already clicked',1,'Malicious Link',["Close the page; enter nothing further. If you typed anything, treat it as shared credentials.","Change passwords from a different, clean device.","Scan the phone/PC with trusted security software.","Watch for follow-up calls or messages."]],
+[/\bi (already |just )?(replied|responded|answered|texted back)/,'Already replied',1,'Phishing',["Stop replying. Block and report the sender.","Expect pressure or follow-up messages — do not click or pay.","Share nothing further; verify anything they claim through official channels."]]];
+function incident(t){const l=t.toLowerCase();for(const[r,title,st,ty,steps]of INC)if(r.test(l))return{title,st,ty,steps};return null}
+/* playbooks (curated, fictional, no real brands) */
+const REC=[['r0','Nothing lost yet — you have not acted.'],['r0','Fully recoverable if you stop here.'],['r1','Partly recoverable — change credentials / call your provider immediately.'],['r2','Hard to undo — money or access may already be gone. Act in the first hour.']];
+const PB={'Financial Scam':{c:'A look-alike "confirmation" screen asks for your PIN or mobile-money details (illustration only — not a real page).',r:'"Agent": "Send it quickly or the reversal will fail." If you hesitate: "Your money will be lost in 10 minutes."',x:'They now hold your PIN / OTP or a payment from you.',o:'Wallet is drained and funds are moved through cash-out agents.'},
+'Phishing':{c:'A fake sign-in page copies the look of a familiar service and captures your login (illustration only).',r:'"Support": "Your account is still at risk — confirm your details now." Pressure escalates with each reply.',x:'They obtain your login details.',o:'Account takeover: password changed, contacts messaged, data or money taken.'},
+'Identity Fraud':{c:'A "verification form" asks for ID number, password and OTP (illustration only).',r:'"Officer": "We only need one more code to finish." Each answer unlocks another request.',x:'They collect identity details and one-time codes.',o:'Accounts opened or taken over in your name; SIM/wallet takeover.'},
+'AI-Enabled Threat':{c:'A "live" call-back or follow-up video repeats the request in a trusted voice/face (simulated).',r:'The "manager": "It cannot wait — I will explain later. Do not tell anyone." Secrecy and urgency rise.',x:'You authorise a transfer or hand over personal details.',o:'Funds leave to a new account and are quickly moved on.'},
+'Malicious Link':{c:'The link opens a credential-capture page or starts a file download (illustration only — nothing is opened).',r:'"Sender": "Did you open it? It expires soon." Follow-ups push you to act.',x:'Credentials captured or a malicious file runs on your device.',o:'Device or account compromised; data stolen or used for further attacks.'}};
+/* render */
+let cur=null,ps=1,pmsg='';
+function hl(a){let o='',i=0;const n=a.raw.length;while(i<n){const k=a.ch[i];let j=i;while(j<n&&a.ch[j]===k)j++;const t=E(a.raw.slice(i,j));o+=k?`<mark style="--h:${TAC[k][1]}" title="${TAC[k][0]}">${t}</mark>`:t;i=j}return o}
+function band(a,tg){let b=a.risk;const d=(tg.exp?1:0)+(tg.ver?1:0);const L=['Low','Medium','High'];let i=L.indexOf(b);i=Math.max(a.irr>=3&&a.susp?1:0,i-Math.min(d,1));return L[i]}
+function run(){const t=$('in').value.trim();if(!t)return;const inc=incident(t);let a=analyze(t);cur={a,inc,tg:{exp:false,ver:false},t};
+ps=inc?inc.st:1;pmsg='';draw()}
+function draw(){const{a,inc,tg}=cur,ty=a.susp?a.type:(inc?inc.ty:null),pb=ty&&PB[ty],b=band(a,tg);
+let h=`<div class="card"><h3>Verdict</h3>${inc?'<span class="pill sus">INCIDENT: '+inc.title+'</span> ':''}<span class="pill ${a.susp?'sus':'ok'}">${a.susp?'Suspicious':'Benign'}</span> <span class="pill" style="background:var(--p2)">${a.type}</span> <span class="pill ${b}">${b} risk${b!=a.risk?' (guidance-adjusted)':''}</span>
+<div class="big">${a.reason}</div><div>➜ ${a.action}</div><div class="mu">Risk = likelihood × irreversibility of the ask. Band shown, not a fake percentage.</div></div>`;
+h+=`<div class="card"><h3>Threat DNA — tactics tied to the exact words</h3><div class="msg">${hl(a)}</div><div class="tags">${a.dna.map(d=>`<span class="tag ${d.st}" style="--h:${d.h}">${d.nm}<i>${d.st}</i></span>`).join('')}</div>
+<div class="mu" style="margin-top:8px">${a.dna.filter(d=>d.ev.length).map(d=>`<b>${d.nm}:</b> ${d.ev.map(E).join(', ')}`).join(' · ')}</div>
+<div class="mu">Entities — sector: ${a.ents.sector} · ask: ${a.ask||'—'} · amounts: ${a.ents.amounts.join(', ')||'—'} · links (never fetched): ${a.ents.urls.map(E).join(', ')||'—'}</div></div>`;
+if(inc)h+=`<div class="card" style="border-color:var(--hi)"><h3>Incident mode — first-hour plan</h3><b>${inc.title}</b> — replay pointer jumped to stage ${inc.st+1}.<ol>${inc.steps.map(s=>'<li>'+s+'</li>').join('')}</ol>
+<b>Keep as evidence (do not delete):</b> the message, sender number/address, times, transaction references.<div class="mu" style="margin-top:6px">Pre-drafted report (editable):</div><textarea>On [date/time] I received a message via [channel] from [sender] concerning: "${cur.t.slice(0,120).replace(/"/g,"'")}". I [what you did]. Reference/details: [ref]. Please advise on the steps to take and record this report.</textarea>
+<div class="mu">Local reporting channels and provider procedures: TO BE VERIFIED — no contact details invented.</div></div>`;
+if(pb){h+=`<div class="card"><h3>Attack Replay — simulation of the typical progression, not a prediction of one criminal</h3><div class="chain">${['Hook','Action point','Extraction','Takeover / cash-out'].map((n,i)=>`<div class="st ${i==ps?'on':i<ps?'done':''}">${i+1}. ${n}</div>`).join('')}</div>
+<div class="row"><span class="mu">You decide:</span><button class="g" data-a="click">Click</button><button class="g" data-a="reply">Reply</button><button class="g" data-a="ignore">Ignore</button><button class="g" data-a="report">Report</button><button class="g" data-a="next">Next stage ▸</button></div>
+<div class="detail">${pmsg||[ 'The message itself is the hook: '+E(cur.t),'You are at the decision point. What do you do?',pb.x,pb.o][ps]}</div>
+<div class="rec ${REC[ps][0]}"><b>Still recoverable?</b> ${REC[ps][1]}</div></div>`}
+const miss=['No verifiable sender in the message',a.ask?'Asks for '+a.ask+' — a legitimate service would not':null,tg.exp?null:'Not confirmed as expected',a.ents.urls.length?'Link not independently confirmed':null].filter(Boolean);
+h+=`<div class="card"><h3>Trust Gap — what you'd need before trusting this</h3><ul>${miss.map(m=>'<li>'+m+'</li>').join('')}</ul>
+<b>Verify:</b> don't use the message's link · open the official service yourself · use an independently sourced phone number.
+<label><input type="checkbox" data-tg="ver" ${tg.ver?'checked':''}> Sender confirmed through an official channel</label><label><input type="checkbox" data-tg="exp" ${tg.exp?'checked':''}> I was expecting this</label>
+<div class="mu">Toggles are rule-based <b>guidance</b>, not learned effects. Band drops at most one step.</div>${a.irr>=3&&a.susp&&(tg.ver||tg.exp)?'<div class="warn">⚠ Guardrail: this message asks for something irreversible (PIN/OTP/money/login). The band cannot fall below Medium and the warning stays.</div>':''}</div>`;
+$('out').innerHTML=h}
+$('out').addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;const ty=cur.a.susp?cur.a.type:cur.inc.ty,pb=PB[ty];
+if(a=='click'){ps=2;pmsg='<b>You clicked.</b> '+pb.c}else if(a=='reply'){ps=1;pmsg='<b>You replied.</b> '+pb.r}else if(a=='next')ps=Math.min(3,ps+1),pmsg='';
+else{ps=0;pmsg=a=='ignore'?'<b>You ignored it.</b> The attack stops here — the scammer needs your action to continue. Nothing lost.':'<b>You reported it.</b> Block the sender, forward to your provider, and warn others. The attack stops here. Nothing lost.'}draw()});
+$('out').addEventListener('change',e=>{const k=e.target.dataset.tg;if(k){cur.tg[k]=e.target.checked;draw()}});
+$('go').onclick=run;document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{$('in').value=b.dataset.p;run()});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));['a','r','c'].forEach(i=>$(i).classList.toggle('hide',i!=b.dataset.t))});
+/* arena */
+const SEEDS=["Your account will be suspended today. Verify your details immediately using the link below.","Your mailbox storage is full. Sign in now to prevent your account from being disabled.","Congratulations! You have won US$500. Send your mobile money details to receive your prize.","Your payment has failed. Send your PIN so that our agent can reverse the transaction.","Please send your national ID number, password and OTP to complete your account verification.","We need your account details urgently to update your profile. Reply with your password.","This voice message from your manager asks you to urgently transfer money to a new account.","A video appears to show a public official announcing an urgent payment programme and requesting personal details.","Click http://example.invalid/security-check to restore your account immediately.","Download the attached document to receive your outstanding payment statement."];
+const BEN=["Your appointment at the clinic is confirmed for Tuesday at 10:00. Please bring your identification.","Your university timetable has been published. Please log in through the usual student portal.","Reminder: the lecture has moved to 2pm today. Please arrive on time.","Thanks for your order. It will be ready for collection on Friday."];
+const MUT={'Homoglyphs':s=>s.replace(/[aeopc]/g,c=>({a:'а',e:'е',o:'о',p:'р',c:'с'}[c])),'Zero-width chars':s=>s.split('').map((c,i)=>i%3==2?c+'\u200b':c).join(''),'Split link':s=>s.replace('http://','hxxp://').replace('.invalid','[.]invalid'),'Leetspeak (held-out)':s=>s.replace(/[aeio]/g,c=>({a:'@',e:'3',i:'1',o:'0'}[c]))};
+$('arena').onclick=()=>{let rows='';const cnt=(f,N)=>SEEDS.filter(s=>analyze(f(s),N).susp).length;
+for(const[n,f]of Object.entries(MUT)){const a=cnt(f,false),b=cnt(f,true);rows+=`<tr><td>${n}</td><td>${a}/10</td><td>${b}/10</td></tr>`}
+const id=cnt(s=>s,true),fp0=BEN.filter(s=>analyze(s,false).susp).length,fp1=BEN.filter(s=>analyze(s,true).susp).length;
+$('arout').innerHTML=`<table style="margin-top:10px"><tr><th>Mutation</th><th>Caught before patch</th><th>Caught after patch</th></tr><tr><td>Unmodified seeds (in-sample)</td><td>${cnt(s=>s,false)}/10</td><td>${id}/10</td></tr>${rows}<tr><td><b>False positives on benign</b></td><td>${fp0}/4</td><td>${fp1}/4</td></tr></table>
+<p class="mu">Patch = Unicode normalization (homoglyph map, zero-width strip, defanged-link handling) — it was not tuned on Leetspeak, so remaining misses are shown, not hidden. Not yet built: Shona/English mixing, paraphrase, AI-polished tone, retraining on misses.</p>`};
+/* batch */
+function parse(t){const r=[];let row=[],c='',q=false;for(let i=0;i<t.length;i++){const x=t[i];if(q){if(x=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=x}else if(x=='"')q=true;else if(x==','){row.push(c);c=''}else if(x=='\n'||x=='\r'){if(x=='\r'&&t[i+1]=='\n')i++;row.push(c);c='';if(row.some(v=>v!==''))r.push(row);row=[]}else c+=x}row.push(c);if(row.some(v=>v!==''))r.push(row);return r}
+const Q=v=>'"'+String(v).replace(/"/g,'""')+'"';let outCsv='';
+$('f').onchange=e=>{const r=new FileReader();r.onload=()=>$('csv').value=r.result;r.readAsText(e.target.files[0])};
+$('bt').onclick=()=>{const R=parse($('csv').value.trim()),H=R[0]?.map(x=>x.trim().toLowerCase())||[],ci=H.findIndex(h=>['content','text','message'].includes(h));
+if(ci<0){$('bout').innerHTML='<div class="warn">No content/text/message column found.</div>';return}
+const idi=H.indexOf('incident_id');let o=(idi>=0?'incident_id,':'')+'label,type,risk,explanation,action\n',pv='';
+R.slice(1).forEach(r=>{const a=analyze(r[ci]||'');const l=a.susp?'Suspicious':'Benign';o+=(idi>=0?Q(r[idi])+',':'')+[l,a.type,a.risk,a.reason,a.action].map(Q).join(',')+'\n';if(pv.split('</tr>').length<9)pv+=`<tr><td>${E((r[ci]||'').slice(0,60))}…</td><td>${l}</td><td>${a.type}</td><td>${a.risk}</td></tr>`});
+outCsv=o;$('dl').disabled=false;$('bout').innerHTML=`<p class="mu">${R.length-1} rows processed. Preview (first 8):</p><table><tr><th>Content</th><th>Label</th><th>Type</th><th>Risk</th></tr>${pv}</table>`};
+$('dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([outCsv],{type:'text/csv'}));a.download='results.csv';a.click()};
+</script></body></html>

@@ -1,0 +1,27 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+*.spec
+
+# Local Guardian data (never commit real alerts, config, tokens or mail)
+.attack_replay/
+.attack_replay_demo/
+*.db
+config.json
+outbox/
+evidence/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Trained model is rebuilt by scripts/train.py (install.py and guardian.py do this on first run)
+models/*.joblib

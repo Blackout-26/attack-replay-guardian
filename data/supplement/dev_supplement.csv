@@ -1,0 +1,91 @@
+id,partition,channel,content,threat_label,source
+DEV001,train,Email,Security alert: unusual sign-in detected on your account. Confirm your identity via the link below or access will be limited.,Phishing,developer-authored
+DEV002,train,Email,Your email password expires in 24 hours. Click here to keep the same password and avoid losing access.,Phishing,developer-authored
+DEV003,train,Email,"Dear customer, your online banking profile has been locked. Re-activate it now to avoid permanent closure.",Phishing,developer-authored
+DEV004,train,Email,We could not deliver your parcel. Update your delivery address using this link within 48 hours or it will be returned.,Phishing,developer-authored
+DEV005,train,Email,Your student portal account will be deactivated unless you re-validate your login today.,Phishing,developer-authored
+DEV006,train,Email,Your subscription payment was declined. Update your billing details at the secure page to continue service.,Phishing,developer-authored
+DEV007,train,Email,IT Helpdesk: mailbox quota exceeded. Login to the webmail page to increase your storage or your mail will be blocked.,Phishing,developer-authored
+DEV008,train,Email,Your account has been flagged for verification. Follow the link and confirm your details to restore full access.,Phishing,developer-authored
+DEV009,final_test,Email,Attention: your account shows suspicious activity. Sign in immediately to secure it before it is suspended.,Phishing,developer-authored
+DEV010,final_test,Email,Final warning! Your mailbox will be deleted in 12 hours. Validate your email account through the portal.,Phishing,developer-authored
+DEV011,final_test,Email,Your bank profile needs urgent re-verification. Use the secure link sent below to continue banking.,Phishing,developer-authored
+DEV012,final_test,Email,HR notice: update your payroll login details today to keep receiving your salary.,Phishing,developer-authored
+DEV013,final_test,Email,Your cloud storage is almost full. Log in now to avoid losing your files.,Phishing,developer-authored
+DEV014,train,SMS,"Dear winner, you have been selected for a US$1000 lottery. Pay a small release fee to claim your prize.",Financial Scam,developer-authored
+DEV015,train,SMS,"Sorry, I sent you money by mistake. Please send it back to this number, I am in a hurry.",Financial Scam,developer-authored
+DEV016,train,SMS,"Invest US$100 today and receive US$500 in one week. Guaranteed returns, limited slots. Send via mobile money now.",Financial Scam,developer-authored
+DEV017,train,SMS,Your mobile wallet transaction is pending. Reply with your PIN to release the funds.,Financial Scam,developer-authored
+DEV018,train,SMS,"Congratulations, you qualify for a free loan. Send a processing fee of $20 to receive it.",Financial Scam,developer-authored
+DEV019,train,SMS,Your refund of US$85 is ready. Send your wallet number and PIN to receive it.,Financial Scam,developer-authored
+DEV020,train,SMS,I am stuck at the border and need urgent cash. Send $50 by mobile money and I will pay you back tomorrow.,Financial Scam,developer-authored
+DEV021,train,SMS,"Earn daily income from home, no experience needed. Pay a registration fee to begin.",Financial Scam,developer-authored
+DEV022,final_test,SMS,You are the lucky winner of a car! Send a clearance fee to collect your prize today.,Financial Scam,developer-authored
+DEV023,final_test,SMS,"Wrong transfer! I accidentally sent you US$40, kindly reverse it to my number immediately.",Financial Scam,developer-authored
+DEV024,final_test,SMS,Double your money in 3 days with our trading group. Deposit now through mobile money.,Financial Scam,developer-authored
+DEV025,final_test,SMS,Your token purchase failed but money was deducted. Send your PIN to our agent to get your refund.,Financial Scam,developer-authored
+DEV026,final_test,SMS,Grant approved for small businesses. Pay a $15 processing fee first to receive your funds.,Financial Scam,developer-authored
+DEV027,train,SMS,"To complete your SIM registration, reply with your national ID number and full date of birth.",Identity Fraud,developer-authored
+DEV028,train,SMS,"Bank verification: please provide your full card number, expiry date and CVV to avoid account closure.",Identity Fraud,developer-authored
+DEV029,train,SMS,"Confirm your identity by sending your ID number, home address and mother's maiden name.",Identity Fraud,developer-authored
+DEV030,train,SMS,Your account recovery code has been sent. Reply with the code and your password to finish the reset.,Identity Fraud,developer-authored
+DEV031,train,SMS,Kindly send a photo of your national ID and a selfie to unlock your wallet.,Identity Fraud,developer-authored
+DEV032,train,SMS,"Employer records update: reply with your ID number, bank account number and tax number.",Identity Fraud,developer-authored
+DEV033,train,SMS,Please confirm your login username and password so we can fix your profile.,Identity Fraud,developer-authored
+DEV034,train,SMS,Security check: enter your OTP and ID number to prove you are the account owner.,Identity Fraud,developer-authored
+DEV035,final_test,SMS,"For KYC compliance send us your ID number, address and PIN today.",Identity Fraud,developer-authored
+DEV036,final_test,SMS,"We are updating our records. Reply with your full name, ID number and date of birth.",Identity Fraud,developer-authored
+DEV037,final_test,SMS,Your SIM will be blocked. Send a copy of your ID and your account password to keep the line active.,Identity Fraud,developer-authored
+DEV038,final_test,SMS,Verify it is you: send the six-digit code you received and your surname.,Identity Fraud,developer-authored
+DEV039,final_test,SMS,Submit your passport details and account login to receive your scholarship funds.,Identity Fraud,developer-authored
+DEV040,train,SMS,Your invoice is ready. Download it here: http://files.example.invalid/invoice,Malicious Link,developer-authored
+DEV041,train,SMS,Watch this shocking video of you: http://clip.example.invalid/watch,Malicious Link,developer-authored
+DEV042,train,SMS,Install the security update from http://update.example.invalid/app to protect your phone.,Malicious Link,developer-authored
+DEV043,train,SMS,Open the attached file to view your payment advice: statement.zip,Malicious Link,developer-authored
+DEV044,train,SMS,Track your package at http://track.example.invalid/id and pay the customs fee.,Malicious Link,developer-authored
+DEV045,train,SMS,You have a new voicemail. Click http://vm.example.invalid/play to listen.,Malicious Link,developer-authored
+DEV046,train,SMS,Your tax refund document is attached. Enable macros to view the content.,Malicious Link,developer-authored
+DEV047,train,SMS,Click short.example.invalid/x9 to see who viewed your profile.,Malicious Link,developer-authored
+DEV048,final_test,SMS,New document shared with you. Open http://docs.example.invalid/share to view.,Malicious Link,developer-authored
+DEV049,final_test,SMS,Your phone is infected! Download the cleaner app at http://fix.example.invalid now.,Malicious Link,developer-authored
+DEV050,final_test,SMS,Payment receipt attached. Open the zip file to confirm the transaction.,Malicious Link,developer-authored
+DEV051,final_test,SMS,Click http://prize.example.invalid/claim to get your reward before it expires.,Malicious Link,developer-authored
+DEV052,final_test,SMS,Is this you in this photo? http://photo.example.invalid/view,Malicious Link,developer-authored
+DEV053,train,Voice message,This voice note from your director asks you to urgently approve a payment to a new supplier.,AI-Enabled Threat,developer-authored
+DEV054,train,Voice message,A video message of your CEO instructs staff to buy gift vouchers and send the codes immediately.,AI-Enabled Threat,developer-authored
+DEV055,train,Voice message,An audio clip that sounds like your relative says they are in trouble and need money sent right now.,AI-Enabled Threat,developer-authored
+DEV056,train,Voice message,This recording of a government minister announces a cash grant and asks citizens to register their details.,AI-Enabled Threat,developer-authored
+DEV057,train,Voice message,A video call from what looks like your bank manager asks you to move your savings to a safe account.,AI-Enabled Threat,developer-authored
+DEV058,train,Voice message,An AI-generated voice of your supervisor asks you to share the system password over a call.,AI-Enabled Threat,developer-authored
+DEV059,train,Voice message,A deepfake video of a well-known businessman promotes an investment scheme and asks viewers to deposit funds.,AI-Enabled Threat,developer-authored
+DEV060,train,Voice message,This voice message from your child's school principal asks you to pay fees to a new mobile wallet urgently.,AI-Enabled Threat,developer-authored
+DEV061,final_test,Voice message,A voice message that sounds like your boss says: transfer the funds to this account before end of day.,AI-Enabled Threat,developer-authored
+DEV062,final_test,Voice message,A video of a public official announces a relief fund and asks you to submit personal details.,AI-Enabled Threat,developer-authored
+DEV063,final_test,Voice message,An audio message from someone who sounds like your sibling asks you to send airtime and money urgently.,AI-Enabled Threat,developer-authored
+DEV064,final_test,Voice message,This video of your company director tells finance to change the supplier bank details immediately.,AI-Enabled Threat,developer-authored
+DEV065,final_test,Voice message,A synthetic voice of a bank officer asks you to read out the code you just received.,AI-Enabled Threat,developer-authored
+DEV066,train,SMS,Reminder: the team meeting is at 14:00 tomorrow in the boardroom. Please bring your reports.,Benign,developer-authored
+DEV067,train,SMS,Your electricity bill for this month is ready. You can view it on the official app or at any branch.,Benign,developer-authored
+DEV068,train,SMS,The lecture scheduled for Monday has moved to Wednesday 10:00 in Room 4. Please arrive on time.,Benign,developer-authored
+DEV069,train,SMS,Your OTP is 482913. Do not share this code with anyone. It expires in 5 minutes.,Benign,developer-authored
+DEV070,train,SMS,Your parcel has been delivered to the reception desk. Thank you for shopping with us.,Benign,developer-authored
+DEV071,train,SMS,Happy birthday! Wishing you a wonderful year ahead. Dinner on Saturday?,Benign,developer-authored
+DEV072,train,SMS,Payment received: thank you for settling your account. No further action is needed.,Benign,developer-authored
+DEV073,train,SMS,Reminder: your library book is due on Friday. Renew it at the desk if you need more time.,Benign,developer-authored
+DEV074,final_test,SMS,Your exam timetable has been posted on the notice board. Good luck!,Benign,developer-authored
+DEV075,final_test,SMS,Your prescription is ready for collection at the pharmacy until 17:00 today.,Benign,developer-authored
+DEV076,final_test,SMS,Your monthly statement is available. Log in through the official app if you would like to view it.,Benign,developer-authored
+DEV077,final_test,SMS,Urgent: the water supply will be off tomorrow from 08:00 to 12:00 for maintenance.,Benign,developer-authored
+DEV078,final_test,SMS,"Your one-time PIN is 771204. Never share it with anyone, including our staff.",Benign,developer-authored
+DEV079,train,SMS,"Your password was changed successfully. If this was not you, contact us through the official app.",Benign,developer-authored
+DEV080,train,SMS,School fees for term 3 are due on 15 October. Payment can be made at the bank or through the official portal.,Benign,developer-authored
+DEV081,train,SMS,Never share your PIN or OTP with anyone. Our staff will never ask for it.,Benign,developer-authored
+DEV082,train,SMS,The staff meeting has been moved to Thursday at 9:00. Please confirm your attendance with the secretary.,Benign,developer-authored
+DEV083,train,SMS,Your order has been dispatched and should arrive within 3 working days. Thank you for your purchase.,Benign,developer-authored
+DEV084,train,SMS,Your data bundle has been activated and is valid for 30 days. Thank you for staying with us.,Benign,developer-authored
+DEV085,train,SMS,Please find the minutes of yesterday's meeting attached. Let me know if anything needs correcting.,Benign,developer-authored
+DEV086,train,SMS,Your flight check-in opens tomorrow at 06:00. Have your travel documents ready at the airport.,Benign,developer-authored
+DEV087,train,SMS,"Hi, I will be late for lunch, traffic is heavy. Start without me.",Benign,developer-authored
+DEV088,train,SMS,Your loan repayment of $45 was received. Your next instalment is due on 30 October.,Benign,developer-authored
+DEV089,train,SMS,The water tanker will visit our street on Saturday morning. Please store enough water.,Benign,developer-authored
+DEV090,train,SMS,Your visa appointment is booked for 2 November at 09:30. Please arrive early with your original documents.,Benign,developer-authored

@@ -1,0 +1,9 @@
+scikit-learn>=1.4
+pandas>=2.0
+joblib
+numpy
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart
+pytest
+httpx

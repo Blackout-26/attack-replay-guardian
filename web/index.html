@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attack Replay Guardian</title>
+<style>
+/* No external fonts, scripts or images: Guardian is local and offline by design (see the CSP in ar/api.py). */
+:root{
+  --blue:#1a6df2; --blue-d:#1257cf; --blue-l:#e9f1fe; --ink:#1d2842; --mu:#8791a7; --line:#e7ecf4; --bg:#f1f4f9; --card:#fff;
+  --red:#f0336f; --red-l:#fdeaf0; --amber:#d98200; --amber-l:#fff3dc; --green:#13a06d; --green-l:#e1f6ee;
+  --sh:0 1px 2px rgba(26,60,120,.05),0 8px 24px rgba(26,60,120,.07);
+  --font:"Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(900px 520px at 88% -8%,#e2ebfa 0,transparent 62%),radial-gradient(760px 520px at -4% 104%,#e7eefb 0,transparent 60%),var(--bg);color:var(--ink);font:14px/1.45 var(--font)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hide{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:56px 248px minmax(0,1fr);min-height:100vh}
+.rail{background:var(--blue);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0;position:sticky;top:0;height:100vh}
+.rail .logo{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);display:grid;place-items:center;color:#fff;margin-bottom:14px}
+.rail button{position:relative;width:40px;height:40px;border:0;border-radius:10px;background:none;color:rgba(255,255,255,.72);display:grid;place-items:center}
+.rail button:hover{color:#fff;background:rgba(255,255,255,.1)}
+.rail button[aria-current=page]{color:#fff;background:rgba(255,255,255,.18)}
+.rail button[aria-current=page]::before{content:"";position:absolute;left:-8px;top:11px;width:3px;height:18px;border-radius:0 3px 3px 0;background:#fff}
+.rail .push{flex:1}
+.side{background:var(--card);border-right:1px solid var(--line);padding:22px 18px;position:sticky;top:0;height:100vh;overflow:auto}
+.side h1{margin:0;font-size:18px;line-height:1.25;font-weight:650}
+.side .state{margin:2px 0 0;font-size:18px;font-weight:650;color:var(--blue)}
+.side .state.off{color:var(--amber)} .side .state.down{color:var(--red)}
+.meta{margin:12px 0 0;display:grid;gap:5px;color:var(--mu);font-size:12px}
+.meta div{display:flex;gap:7px;align-items:center}.meta svg.i{width:14px;height:14px}
+.prog{margin:18px 0 6px;font-size:13px}.prog b{font-size:18px;font-weight:600}
+.bar{height:4px;border-radius:4px;background:var(--line);overflow:hidden}.bar>i{display:block;height:100%;background:var(--blue);border-radius:4px;transition:width .6s}
+.ctl{padding:14px 0;border-top:1px solid var(--line);font-size:12px;color:var(--mu)}
+.ctl h3{margin:0 0 3px;font-size:13px;font-weight:650;color:var(--ink)}
+.ctl p{margin:0 0 8px}
+.ctl.sw{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}.ctl.sw p{margin:0}
+.sw-btn{flex:none;width:34px;height:20px;border-radius:12px;border:0;background:#cfd7e6;position:relative;transition:background .2s;margin-top:2px}
+.sw-btn::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.sw-btn[aria-checked=true]{background:var(--blue)}.sw-btn[aria-checked=true]::after{transform:translateX(14px)}
+.sw-btn[aria-disabled=true]{opacity:.45;cursor:not-allowed}
+.samples{display:grid;gap:6px}
+.btn{border:0;border-radius:8px;background:var(--blue);color:#fff;padding:8px 14px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+.btn:hover{background:var(--blue-d)}
+.btn.ghost{background:var(--blue-l);color:var(--blue)}.btn.ghost:hover{background:#dbe8fd}
+.btn.line{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}.btn.line:hover{background:#f6f8fc}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:7px}
+.btn.chipbtn{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);font-weight:500;justify-content:flex-start;text-align:left;font-size:12px;padding:6px 10px}
+.btn.chipbtn:hover{box-shadow:inset 0 0 0 1px var(--blue);color:var(--blue)}
+
+.main{min-width:0;padding:0 24px 40px}
+.top{display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 85%,transparent);margin:0 -24px;padding:0 24px}
+.tabs{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto}
+.tab{background:none;border:0;border-top:3px solid transparent;padding:15px 16px 12px;color:var(--mu);font-size:13px;white-space:nowrap}
+.tab:hover{color:var(--ink)}.tab[aria-selected=true]{color:var(--ink);border-top-color:var(--blue);font-weight:600}
+.icon-btn{position:relative;width:36px;height:36px;border:0;border-radius:10px;background:none;display:grid;place-items:center;color:var(--ink)}
+.icon-btn:hover{background:#fff}
+.badge{position:absolute;top:2px;right:0;min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.who-chip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:20px;background:#fff;box-shadow:var(--sh);font-size:13px;font-weight:600;white-space:nowrap}
+.who-chip .dot{width:24px;height:24px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff}
+.who-chip .dot svg{width:13px;height:13px}
+.who-chip.off .dot{background:var(--amber)}.who-chip.down .dot{background:var(--red)}
+section.page{padding-top:14px}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border-radius:10px;box-shadow:var(--sh);padding:16px 18px;min-width:0}
+.ct{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:10px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;color:var(--ink)}
+.ct::before{content:"";width:7px;height:7px;border-radius:50%;border:2px solid var(--blue);flex:none}
+.ct.red::before{border-color:var(--red)}
+.ct .grow{flex:1}
+.num{font-weight:300;font-size:30px;line-height:1.1;letter-spacing:-.01em}
+.mu{color:var(--mu)}.small{font-size:12px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid>.span2{grid-column:span 2}
+.stack{display:grid;gap:16px;grid-template-rows:1fr 1fr}
+.blue{background:var(--blue);color:#fff;box-shadow:0 10px 26px rgba(26,109,242,.32)}
+.blue .ct{color:#fff}.blue .ct::before{border-color:rgba(255,255,255,.7)}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--blue-l);color:var(--blue)}
+.pill.high{background:var(--red-l);color:var(--red)}.pill.med{background:var(--amber-l);color:var(--amber)}.pill.low{background:var(--green-l);color:var(--green)}.pill.plain{background:#eef1f7;color:#55607a}
+
+/* chart */
+.chart-head{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px}
+.chart-head .lab{font-size:12px;color:var(--mu)}
+.chart-head .num.prev{color:#b6bfd0}
+.plot{position:relative;height:232px}
+.plot svg{display:block;width:100%;height:100%;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;white-space:nowrap;transform:translate(-50%,-120%);opacity:0;transition:opacity .12s}
+.legend{display:flex;gap:16px;font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--mu);margin-left:auto;align-items:center}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid var(--blue);vertical-align:middle;margin-right:6px}
+.legend i.d{border-top:2px dotted #b6bfd0}
+.ghost-msg{position:absolute;inset:40px 0 30px;display:grid;place-items:center;text-align:center;color:var(--mu);font-size:13px;pointer-events:none}
+
+/* rings */
+.ring-wrap{display:grid;place-items:center;position:relative;margin:4px 0 12px}
+.ring-wrap .mid{position:absolute;text-align:center}
+.ring-wrap .mid .num{font-size:40px}
+.ring-wrap .mid small{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.two{display:flex;justify-content:space-between;text-align:center;font-size:12px}
+.two b{display:block;font-weight:400;font-size:20px;color:var(--ink)}
+.two .b{color:var(--blue)}.two .r{color:var(--red)}
+.mini{display:flex;flex-direction:column}.mini .num{font-size:38px}.mini .row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:auto}
+.mini svg{width:58%;height:56px;overflow:visible}
+.blue .num{color:#fff}
+
+/* alert list */
+.lists{list-style:none;margin:0;padding:0}
+.arow{width:100%;display:grid;grid-template-columns:14px 38px minmax(0,1fr) auto auto;gap:12px;align-items:center;text-align:left;border:0;background:none;border-radius:8px;padding:9px 12px;transition:background .15s}
+.arow:hover{background:#f5f8fd}
+.arow.sel{background:var(--blue);color:#fff;box-shadow:0 8px 20px rgba(26,109,242,.28)}
+.arow .st{width:9px;height:9px;border-radius:50%;border:1.5px solid #c3cbdb}.arow .st.new{background:var(--blue);border-color:var(--blue)}
+.arow.sel .st{border-color:#fff}.arow.sel .st.new{background:#fff}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--red-l);color:var(--red)}
+.av.med{background:var(--amber-l);color:var(--amber)}.av.low{background:var(--green-l);color:var(--green)}
+.arow.sel .av{background:rgba(255,255,255,.2);color:#fff}
+.arow .w{min-width:0}.arow .w b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow .w small{display:block;color:var(--mu);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow.sel .w small{color:rgba(255,255,255,.8)}
+.chip{font-size:11px;font-weight:600;color:#55607a;background:#eef1f7;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.arow.sel .chip{background:rgba(255,255,255,.2);color:#fff}
+.sc{font-size:17px;font-weight:650;min-width:52px;text-align:right;color:var(--red)}.sc.med{color:var(--amber)}.sc.low{color:var(--green)}
+.arow.sel .sc{color:#fff}
+.recent-top{display:flex;gap:26px;align-items:flex-end;margin-bottom:10px;padding-bottom:12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.recent-top .num{color:var(--blue);font-size:26px}.recent-top .num.prev{color:#b6bfd0}
+.recent-top svg{width:84px;height:26px;margin-left:8px;vertical-align:middle}
+.empty{padding:26px 10px;text-align:center;color:var(--mu)}.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}.empty .btn{margin-top:12px}
+.hbars{display:grid;gap:11px;font-size:12px}
+.hbar .l{display:flex;justify-content:space-between;margin-bottom:4px}.hbar .l b{font-weight:600}
+.hbar .t{height:4px;background:var(--line);border-radius:3px}.hbar .t i{display:block;height:100%;border-radius:3px;background:var(--blue)}
+.hbar.h .t i{background:var(--red)}.hbar.m .t i{background:var(--amber)}
+.rs{display:grid;gap:9px;font-size:13px}.rs .r{display:flex;justify-content:space-between;align-items:center;gap:10px}.rs .r span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rs .pill{flex:none;white-space:nowrap}
+
+/* alerts tab */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.fchip{border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--line);border-radius:18px;padding:6px 13px;font-size:13px;color:var(--mu)}
+.fchip[aria-pressed=true]{background:var(--blue);color:#fff;box-shadow:none}
+.field{border:0;background:#fff;box-shadow:inset 0 0 0 1px var(--line);border-radius:8px;padding:7px 11px;font:inherit;color:var(--ink);min-width:0}
+.field:focus{outline:2px solid var(--blue);outline-offset:0}
+.arow.wide{grid-template-columns:14px 38px minmax(0,1fr) auto auto auto auto}
+.qa{display:flex;gap:2px}.qa button{width:30px;height:30px;border:0;border-radius:8px;background:none;color:var(--mu);display:grid;place-items:center}
+.qa button:hover{background:var(--blue-l);color:var(--blue)}.arow.sel .qa button{color:#fff}
+.more{display:block;margin:10px auto 0}
+
+/* check / settings */
+.res{margin-top:16px}
+textarea.field{width:100%;min-height:120px;padding:12px;resize:vertical;line-height:1.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cols{display:grid;gap:16px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.src{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px}.src .d{width:8px;height:8px;border-radius:50%;background:var(--green)}.src .d.error{background:var(--red)}.src .d.starting{background:var(--amber)}
+.plain-list{margin:6px 0 0;padding-left:18px;color:var(--ink)}.plain-list li{margin:4px 0}
+code{background:#eef1f7;border-radius:5px;padding:1px 6px;font-size:12px}
+
+/* detail blocks (used in the drawer and in "Check a message") */
+.score{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.score .big{font-size:20px;font-weight:650;line-height:1.2;margin-bottom:6px}
+.score .tags{display:flex;gap:6px;flex-wrap:wrap}
+.why{font-size:15px;margin:14px 0 8px}
+.act{background:var(--blue-l);color:var(--blue-d);border-radius:8px;padding:9px 12px;font-size:13px;font-weight:550}
+.fac{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:4px 14px;align-items:center;padding:7px 0}
+.fac b{font-weight:600}.fac span.d{grid-column:1;color:var(--mu);font-size:12px}
+.fac .t{grid-column:2;grid-row:1/3;height:6px;background:var(--line);border-radius:4px}.fac .t i{display:block;height:100%;border-radius:4px;background:var(--blue)}
+.note{font-size:12px;color:var(--mu);margin-top:6px}
+.blk h4{margin:0 0 10px;font-size:10px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;display:flex;gap:8px;align-items:center}
+.blk h4::before{content:"";width:7px;height:7px;border-radius:50%;border:2px solid var(--blue)}
+.blk h4.red::before{border-color:var(--red)}
+.msg{background:#f6f8fc;border-radius:8px;padding:12px;line-height:1.65}
+mark{background:hsl(var(--h) 90% 55%/.22);box-shadow:inset 0 -2px 0 hsl(var(--h) 75% 45%);color:inherit;padding:0 1px;border-radius:2px}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:14px;padding:3px 10px 3px 8px;margin:8px 6px 0 0;font-size:12px;background:hsl(var(--h) 90% 55%/.1)}
+.tag::before{content:"";width:8px;height:8px;border-radius:50%;background:hsl(var(--h) 75% 45%)}.tag.absent{opacity:.35}
+.chain{display:flex;gap:6px;margin:10px 0}.stg{flex:1;padding:8px 4px;border-radius:8px;text-align:center;font-size:12px;color:var(--mu);background:#f1f4f9}
+.stg.on{background:var(--blue);color:#fff;font-weight:600}
+.rec{padding:9px 12px;border-radius:8px;font-size:13px;margin-top:10px}.r0,.r1{background:var(--green-l)}.r2{background:var(--amber-l)}.r3{background:var(--red-l)}
+.stage{border-left:3px solid var(--blue);padding:4px 0 4px 12px;margin-top:12px}
+.warn{background:var(--red-l);color:#a3123f;border-radius:8px;padding:9px 12px;margin-top:10px;font-size:13px}
+.chk{display:flex;gap:9px;align-items:center;margin:7px 0;font-size:13px}.chk input{width:16px;height:16px;accent-color:var(--blue)}
+.sev{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;background:var(--amber)}.sev.s3{background:var(--red)}.sev.s1{background:#b6bfd0}
+ul.ev{list-style:none;margin:0;padding:0}ul.ev li{padding:5px 0}
+.res .blk{background:#fff;border-radius:10px;box-shadow:var(--sh);padding:16px 18px;margin-bottom:16px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(29,40,66,.3);opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s .25s;z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100vw);background:#fff;z-index:21;display:flex;flex-direction:column;transform:translateX(104%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s .3s;box-shadow:-24px 0 60px rgba(26,45,90,.2)}
+.open .scrim{opacity:1;visibility:visible;transition:opacity .25s}.open .drawer{transform:none;visibility:visible;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.dh{background:var(--blue);color:#fff;padding:20px 22px 18px;display:flex;gap:14px;align-items:flex-start}
+.dh h2{margin:0;font-size:20px;font-weight:650}.dh p{margin:3px 0 0;font-size:13px;color:rgba(255,255,255,.82);overflow-wrap:anywhere}
+.dh .x{margin-left:auto;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:9px;width:34px;height:34px;display:grid;place-items:center;flex:none}
+.dh .x:hover{background:rgba(255,255,255,.28)}
+.db{flex:1;overflow:auto;padding:6px 22px 24px}
+.drawer .blk{padding:18px 0;border-top:1px solid var(--line)}.drawer .blk:first-child{border-top:0}
+.df{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;background:#fff}
+
+/* floating new-alert card + toast */
+.float{position:fixed;right:24px;bottom:24px;width:300px;z-index:15;border-radius:10px;padding:16px 18px;transform:translateY(24px);opacity:0;visibility:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s,visibility 0s .35s}
+.float.on{transform:none;opacity:1;visibility:visible;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.float .num{font-size:36px}.float p{margin:2px 0 10px;font-size:13px;color:rgba(255,255,255,.88);overflow-wrap:anywhere}
+.float svg.wave{width:100%;height:34px;margin:2px 0 8px;overflow:visible}
+.float .btn{background:#fff;color:var(--blue)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);background:var(--ink);color:#fff;border-radius:10px;padding:10px 14px;font-size:13px;display:flex;gap:14px;align-items:center;opacity:0;visibility:hidden;transition:all .25s;z-index:30;max-width:min(92vw,560px)}
+.toast.on{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.toast button{background:none;border:0;color:#9cc2ff;font-weight:650;padding:0}
+
+/* first-load moment: rings fill and the chart line draws once */
+.intro .ring-fg{animation:ringin 1s cubic-bezier(.2,.8,.2,1)}
+.intro .line{stroke-dasharray:1;animation:draw 1.1s ease-out}
+@keyframes ringin{from{stroke-dashoffset:var(--full)}}
+@keyframes draw{from{stroke-dashoffset:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- responsive ---------- */
+@media (max-width:1280px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grid>.span2{grid-column:span 2}
+}
+@media (max-width:1100px){
+  .app{grid-template-columns:56px minmax(0,1fr)}.side{display:none}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}.rail{display:none}.main{padding:0 14px 40px}.top{margin:0 -14px;padding:0 14px}
+  .grid,.cols{grid-template-columns:minmax(0,1fr)}.grid>.span2{grid-column:auto}
+  .arow,.arow.wide{grid-template-columns:12px 34px minmax(0,1fr) auto}.arow .chip,.arow .qa,.arow .stat{display:none}
+  .who-chip span.t{display:none}.score{grid-template-columns:1fr;justify-items:center;text-align:center}.score .tags{justify-content:center}
+  .float{left:14px;right:14px;width:auto}
+}
+</style>
+</head>
+<body class="intro">
+<div class="app">
+  <nav class="rail" aria-label="Main">
+    <div class="logo" id="logo"></div>
+    <button data-tab="dash" title="Dashboard" aria-label="Dashboard" id="r-dash"></button>
+    <button data-tab="alerts" title="Alerts" aria-label="Alerts" id="r-alerts"></button>
+    <button data-tab="check" title="Check a message" aria-label="Check a message" id="r-check"></button>
+    <span class="push"></span>
+    <button data-tab="settings" title="Settings and sources" aria-label="Settings and sources" id="r-settings"></button>
+  </nav>
+
+  <aside class="side" aria-label="Protection panel">
+    <h1>Attack Replay Guardian</h1>
+    <p class="state" id="s-state">Connecting…</p>
+    <div class="meta" id="s-meta"></div>
+    <div class="prog" id="s-prog"></div>
+    <div id="s-ctl"></div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <div class="tabs" role="tablist" aria-label="Sections">
+        <button class="tab" role="tab" data-tab="dash">Dashboard</button>
+        <button class="tab" role="tab" data-tab="alerts">Alerts</button>
+        <button class="tab" role="tab" data-tab="check">Check a message</button>
+        <button class="tab" role="tab" data-tab="settings">Settings and sources</button>
+      </div>
+      <button class="icon-btn" id="b-search" aria-label="Search alerts"></button>
+      <button class="icon-btn" id="b-bell" aria-label="Alerts that need review"></button>
+      <div class="who-chip" id="chip"><span class="dot"></span><span class="t" id="chip-t">…</span></div>
+    </header>
+
+    <section class="page" id="p-dash" role="tabpanel">
+      <div class="grid">
+        <div class="card span2">
+          <h2 class="ct"><span>Threats flagged</span><span class="grow"></span><span class="legend"><span><i></i>This week</span><span><i class="d"></i>Previous week</span></span></h2>
+          <div class="chart-head" id="c-head"></div>
+          <div class="plot" id="plot"></div>
+        </div>
+        <div class="card" id="k-avg"></div>
+        <div class="stack">
+          <div class="card blue mini" id="k-today"></div>
+          <div class="card mini" id="k-scanned"></div>
+        </div>
+
+        <div class="card span2">
+          <h2 class="ct"><span>Recent alerts</span></h2>
+          <div class="recent-top" id="r-top"></div>
+          <ul class="lists" id="r-list"></ul>
+        </div>
+        <div class="card" id="k-review"></div>
+        <div class="stack">
+          <div class="card"><h2 class="ct"><span>Threat types</span></h2><div class="hbars" id="k-types"></div></div>
+          <div class="card"><h2 class="ct"><span>Repeat senders</span></h2><div class="rs" id="k-rep"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page hide" id="p-alerts" role="tabpanel">
+      <div class="filters" id="f-bar"></div>
+      <div class="card"><ul class="lists" id="a-list"></ul><button class="btn line more hide" id="a-more">Show more</button></div>
+    </section>
+
+    <section class="page hide" id="p-check" role="tabpanel">
+      <div class="card">
+        <h2 class="ct"><span>Check a message yourself</span></h2>
+        <label class="sr" for="in">Message to check</label>
+        <textarea class="field" id="in" placeholder="Paste an SMS, an email or a voice-note transcript…"></textarea>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="go">Check message</button>
+          <label class="sr" for="lvl">Reading level</label>
+          <select class="field" id="lvl"><option value="normal">Plain language</option><option value="simple">Very simple</option><option value="technical">Technical</option></select>
+          <label class="sr" for="mode">View</label>
+          <select class="field" id="mode"><option value="citizen">Personal view</option><option value="org">Organisation view</option></select>
+          <span class="mu small">Nothing leaves this computer.</span>
+        </div>
+      </div>
+      <div class="res" id="res"></div>
+    </section>
+
+    <section class="page hide" id="p-settings" role="tabpanel">
+      <div class="cols">
+        <div class="card"><h2 class="ct"><span>Watched sources</span></h2><div id="st-src"></div></div>
+        <div class="card"><h2 class="ct"><span>Reports to your provider</span></h2>
+          <p class="mu small" style="margin-top:0">Reports go only to destinations you set up. A copy is always saved in the outbox folder.</p>
+          <label class="sr" for="wh">Report webhook address</label>
+          <div class="row"><input class="field" id="wh" style="flex:1" placeholder="https://… (empty = none)"><button class="btn" id="whs">Save</button></div>
+          <p class="mu small" id="st-chan"></p>
+          <p class="mu small">Mailboxes, the report email address and the SMTP login are set with <code>python guardian.py setup</code>.</p>
+        </div>
+        <div class="card"><h2 class="ct"><span>Controls</span></h2><div id="st-ctl"></div></div>
+        <div class="card"><h2 class="ct"><span>Privacy</span></h2>
+          <ul class="plain-list">
+            <li>Analysis runs on this computer. No message text leaves it unless you send a report.</li>
+            <li>Mail is opened read-only. Nothing is deleted, moved or marked as read. Links are never opened.</li>
+            <li>Only flagged messages are kept. Normal mail leaves a count with no content.</li>
+          </ul>
+          <p class="mu small">Phone SMS: use an Android “SMS forwarder” app that posts to <code id="ing"></code> with your ingest token (see <code>config.json</code>).</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="shell" class="">
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title" tabindex="-1">
+    <div class="dh"><div><h2 id="d-title">Alert</h2><p id="d-sub"></p></div><button class="x" id="d-x" aria-label="Close"></button></div>
+    <div class="db" id="d-body"></div>
+    <div class="df" id="d-foot"></div>
+  </aside>
+</div>
+<div class="float blue" id="float" role="status"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+let TOKEN = "";
+const api = (u, b) => fetch(u, {method: "POST", headers: {"content-type": "application/json", "x-ar-token": TOKEN}, body: JSON.stringify(b || {})}).then(r => r.json());
+const get = u => fetch(u).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+
+/* ---------- icons ---------- */
+const P = {
+  shield: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/>', shieldok: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2.2 2.2L15 10"/>',
+  grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
+  list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  scan: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 12h8"/>',
+  sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>', bell: '<path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15L6 16z"/><path d="M10 21h4"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', msg: '<path d="M4 5h16v11H9l-5 4V5z"/>', mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  file: '<path d="M6 3h8l4 4v14H6V3z"/><path d="M14 3v4h4"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', send: '<path d="M21 3L10 14"/><path d="M21 3l-7 18-4-7-7-4 18-7z"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', eye: '<path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>', dl: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+};
+const ic = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
+const srcIcon = s => /sms|whatsapp|ingest/i.test(s) ? "msg" : /voice/i.test(s) ? "mic" : /folder/i.test(s) ? "file" : "mail";
+const srcName = s => /sms/i.test(s) ? "SMS" : /whatsapp/i.test(s) ? "WhatsApp" : /ingest/i.test(s) ? "Phone" : /folder/i.test(s) ? "File" : "Email";
+
+/* ---------- small helpers ---------- */
+const tone = n => n >= 65 ? "high" : n >= 50 ? "med" : "low";
+const ago = ts => { const s = Math.max(0, Date.now() / 1000 - ts); return s < 60 ? "just now" : s < 3600 ? Math.floor(s / 60) + " min ago" : s < 86400 ? Math.floor(s / 3600) + " h ago" : new Date(ts * 1000).toLocaleDateString(undefined, {day: "numeric", month: "short"}); };
+const STATUS = {new: "Needs review", reported: "Reported", report_prepared: "Report saved", safe: "Marked safe"};
+const sum = a => a.reduce((x, y) => x + y, 0);
+
+/* smooth path through points (Catmull-Rom to Bezier), control points kept inside [top,bottom] so curves never dip below the axis */
+function smooth(pts, top, bottom) {
+  const cl = y => Math.min(bottom, Math.max(top, y));
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)},${cl(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)},${cl(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
+function spark(vals, color, w = 120, h = 40) {
+  const mx = Math.max(1, ...vals), pts = vals.map((v, i) => [i * w / (vals.length - 1), h - 4 - (h - 8) * v / mx]);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path class="line" pathLength="1" d="${smooth(pts, 2, h - 2)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function ring(pct, size, stroke, color) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - Math.max(0, Math.min(100, pct)) / 100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${Math.round(pct)} percent"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#edf1f7" stroke-width="${stroke}"/>
+  <circle class="ring-fg" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" style="--full:${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
+}
+const COL = {high: "#f0336f", med: "#e8920c", low: "#13a06d", blue: "#1a6df2"};
+
+/* ---------- state ---------- */
+const S = {tab: "dash", status: null, overview: null, alerts: [], filter: "all", sort: "score", q: "", limit: 50, openId: null, known: null, sig: "", online: true};
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg, undo) {
+  const t = $("#toast"); t.innerHTML = `<span>${esc(msg)}</span>${undo ? '<button type="button">Undo</button>' : ""}`; t.classList.add("on");
+  if (undo) $("button", t).onclick = () => { t.classList.remove("on"); undo(); };
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), undo ? 7000 : 4500);
+}
+
+/* ---------- navigation ---------- */
+function setTab(t, focusSearch) {
+  S.tab = t; history.replaceState(null, "", "#" + t);
+  for (const id of ["dash", "alerts", "check", "settings"]) $("#p-" + id).classList.toggle("hide", id !== t);
+  $$(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  $$(".rail button[data-tab]").forEach(b => b.toggleAttribute("aria-current", b.dataset.tab === t) || (b.dataset.tab === t && b.setAttribute("aria-current", "page")));
+  $$(".rail button[data-tab]").forEach(b => b.dataset.tab === t ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
+  render();
+  if (focusSearch) setTimeout(() => $("#f-q")?.focus(), 30);
+}
+$$("[data-tab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+$("#b-search").onclick = () => setTab("alerts", true);
+$("#b-bell").onclick = () => { S.filter = "new"; setTab("alerts"); };
+
+/* ---------- chrome: rail, side panel, top bar ---------- */
+function renderChrome() {
+  $("#logo").innerHTML = ic("shieldok"); $("#r-dash").innerHTML = ic("grid"); $("#r-alerts").innerHTML = ic("list"); $("#r-check").innerHTML = ic("scan"); $("#r-settings").innerHTML = ic("sliders");
+  $("#b-search").innerHTML = ic("search"); $("#b-bell").innerHTML = ic("bell"); $("#d-x").innerHTML = ic("x");
+  const st = S.status, ov = S.overview, A = ov?.alerts;
+  const state = !S.online ? ["Not reachable", "down"] : !st ? ["Connecting…", ""] : st.protection === "on" ? ["Protection on", ""] : ["Manual mode", "off"];
+  $("#s-state").textContent = state[0]; $("#s-state").className = "state " + state[1];
+  $("#chip").className = "who-chip " + state[1]; $("#chip-t").textContent = state[0]; $(".dot", $("#chip")).innerHTML = ic("shieldok");
+  renderMeta();
+  const done = A ? A.reported + A.marked_safe : 0, pc = A && A.total ? Math.round(100 * done / A.total) : 0;
+  $("#s-prog").innerHTML = `<div class="mu small">Alerts reviewed</div><b>${A && A.total ? pc + "%" : "–"}</b><div class="bar" role="img" aria-label="${pc} percent reviewed"><i style="width:${pc}%"></i></div>`;
+  const fa = document.activeElement?.dataset?.act, fk = document.activeElement?.dataset?.k;
+  $("#s-ctl").innerHTML = controls("a"); $("#st-ctl").innerHTML = controls("b");
+  if (fa) { const back = $$(`[data-act="${fa}"]`).filter(x => x.dataset.k === fk && x.offsetParent)[0]; back?.focus(); }
+  const n = A?.needs_review || 0; $("#b-bell").innerHTML = ic("bell") + (n ? `<span class="badge">${n > 99 ? "99+" : n}</span>` : "");
+  $("#b-bell").setAttribute("aria-label", n ? `${n} alerts need review` : "No alerts need review");
+}
+function renderMeta() {
+  const mons = S.status?.monitors || [], last = mons.map(m => m.last_check).filter(Boolean).sort().pop();
+  $("#s-meta").innerHTML = `<div>${ic("eye")}${mons.length ? mons.length + (mons.length === 1 ? " source watched" : " sources watched") : "No sources watched"}</div><div>${ic("clock")}${last ? "Last check " + esc(last.slice(11)) : "Waiting for the first check"}</div>`;
+  renderSettings();
+}
+function sw(act, on, title, text, disabled, pre) {
+  return `<div class="ctl sw"><div><h3 id="${pre}-${act}">${title}</h3><p>${text}</p></div><button type="button" class="sw-btn" role="switch" data-act="${act}" aria-labelledby="${pre}-${act}" aria-checked="${on}" ${disabled ? 'aria-disabled="true"' : ""}></button></div>`;
+}
+function controls(pre) {
+  const st = S.status; if (!st) return "";
+  const rep = st.report_mode !== "off", auto = st.report_mode === "auto";
+  return `<div class="ctl"><h3>Export alerts</h3><p>Download every flagged message with its likelihood score as a spreadsheet file.</p><a class="btn ghost sm" href="/api/alerts.csv" download>${ic("dl")}Export CSV</a></div>`
+    + sw("sw-notify", st.notify_min_risk === "Medium", "Notify for Medium risk", "Show a desktop notice for Medium and High risk. Off: High risk only.", false, pre)
+    + sw("sw-report", rep, "Reports to provider", "Allow sending a report with one click.", false, pre)
+    + sw("sw-auto", auto, "Send High risk automatically", rep ? "Reports go out without asking." : "Turn on reports first.", !rep, pre)
+    + `<div class="ctl"><h3>Try a sample</h3><p>See how an alert looks without waiting for real mail.</p><div class="samples">${(S.samples || []).map(([k, v]) => `<button type="button" class="btn chipbtn" data-act="sim" data-k="${esc(k)}">${esc(v)}</button>`).join("")}</div></div>`;
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.getAttribute("aria-disabled") === "true") return;
+  const a = b.dataset.act, st = S.status;
+  if (a === "sw-notify") await api("/api/settings", {notify_min_risk: st.notify_min_risk === "Medium" ? "High" : "Medium"});
+  else if (a === "sw-report") await api("/api/settings", {report_mode: st.report_mode === "off" ? "ask" : "off"});
+  else if (a === "sw-auto") await api("/api/settings", {report_mode: st.report_mode === "auto" ? "ask" : "auto"});
+  else if (a === "sim") {
+    b.disabled = true; const r = await api("/api/simulate", {sample: b.dataset.k}); b.disabled = false;
+    toast(r.flagged ? `Sample flagged: ${r.alert.score}% likely a threat (${r.alert.threat_type})` : "Sample checked: nothing suspicious, so no alert was raised.");
+  }
+  await refresh(true);
+});
+
+/* ---------- dashboard ---------- */
+function dayName(iso) { return new Date(iso + "T12:00").toLocaleDateString(undefined, {weekday: "short"}); }
+function niceMax(v) { const s = v <= 4 ? 4 : v <= 8 ? 8 : v <= 20 ? Math.ceil(v / 4) * 4 : Math.ceil(v / 20) * 20; return s; }
+
+function renderChart() {
+  const host = $("#plot"), ov = S.overview; if (!ov || S.tab !== "dash") return;
+  const prev = ov.daily.slice(0, 7).map(d => d.flagged), cur = ov.daily.slice(7).map(d => d.flagged), labels = ov.daily.slice(7).map(d => dayName(d.date));
+  $("#c-head").innerHTML = `<div><div class="lab">This week</div><div class="num" style="color:var(--blue)">${sum(cur)} <span style="font-size:15px;color:var(--mu)">flagged</span></div></div><div><div class="lab">Previous week</div><div class="num prev">${sum(prev)}</div></div>`;
+  const W = host.clientWidth || 600, H = host.clientHeight || 232, L = 34, R = 14, T = 26, B = 28, mx = niceMax(Math.max(...cur, ...prev));
+  const x = i => L + (W - L - R) * i / 6, y = v => T + (H - T - B) * (1 - v / mx);
+  const pc = cur.map((v, i) => [x(i), y(v)]), pp = prev.map((v, i) => [x(i), y(v)]);
+  const grid = [0, 1, 2, 3, 4].map(k => { const v = mx * k / 4, yy = y(v); return `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="#e3e9f3" stroke-dasharray="2 5"/><text x="${L - 8}" y="${yy + 4}" text-anchor="end" font-size="10" fill="#9aa4b8">${Number.isInteger(v) ? v : v.toFixed(1)}</text>`; }).join("");
+  const xl = labels.map((l, i) => `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="10" fill="#9aa4b8">${esc(l)}</text>`).join("");
+  const line = smooth(pc, T, H - B), area = `${line} L${x(6)},${y(0)} L${x(0)},${y(0)} Z`;
+  const mi = cur.indexOf(Math.max(...cur)), has = sum(cur) + sum(prev) > 0;
+  const bub = has && cur[mi] > 0 ? `<g transform="translate(${pc[mi][0]},${pc[mi][1]})"><circle r="5" fill="#fff" stroke="${COL.blue}" stroke-width="2"/><rect x="-16" y="-34" width="32" height="21" rx="5" fill="${COL.blue}"/><text y="-19" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">${cur[mi]}</text></g>` : "";
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" aria-label="Threats flagged per day, this week against the previous week" role="img"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${COL.blue}" stop-opacity=".22"/><stop offset="1" stop-color="${COL.blue}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}${xl}<path d="${smooth(pp, T, H - B)}" fill="none" stroke="#b6bfd0" stroke-width="1.6" stroke-dasharray="2 5" stroke-linecap="round"/>
+    <path d="${area}" fill="url(#ag)"/><path class="line" pathLength="1" d="${line}" fill="none" stroke="${COL.blue}" stroke-width="2.4" stroke-linecap="round"/>${bub}
+    <line id="gl" y1="${T}" y2="${H - B}" stroke="${COL.blue}" stroke-dasharray="2 4" opacity="0"/><rect id="hit" x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent"/></svg>
+    <div class="tip" id="tip"></div>${has ? "" : '<div class="ghost-msg">No threats flagged in the last two weeks.<br>Guardian is watching. Try a sample from the panel on the left.</div>'}`;
+  const hit = $("#hit"), gl = $("#gl"), tip = $("#tip");
+  hit.addEventListener("pointermove", e => {
+    const bx = host.getBoundingClientRect(), i = Math.max(0, Math.min(6, Math.round((e.clientX - bx.left - L) / ((W - L - R) / 6))));
+    gl.setAttribute("x1", x(i)); gl.setAttribute("x2", x(i)); gl.setAttribute("opacity", 1);
+    tip.style.left = x(i) + "px"; tip.style.top = y(cur[i]) + "px"; tip.style.opacity = 1;
+    tip.innerHTML = `<b>${esc(labels[i])}</b>: ${cur[i]} flagged · previous week ${prev[i]}`;
+  });
+  hit.addEventListener("pointerleave", () => { gl.setAttribute("opacity", 0); tip.style.opacity = 0; });
+}
+
+function row(a, wide) {
+  const t = tone(a.score);
+  return `<li><div class="arow ${wide ? "wide" : ""} ${S.openId === a.id ? "sel" : ""}" data-open="${esc(a.id)}" role="button" tabindex="0" aria-label="Open alert from ${esc(a.sender)}, ${a.score} percent likely a threat">
+    <span class="st ${a.status === "new" ? "new" : ""}" title="${STATUS[a.status] || a.status}"></span><span class="av ${t}">${ic(srcIcon(a.source))}</span>
+    <span class="w"><b>${esc(a.sender)}</b><small>${esc(a.threat_type)} · <time data-ts="${a.ts}">${ago(a.ts)}</time>${a.subject ? " · " + esc(a.subject) : ""}</small></span>
+    ${wide ? `<span class="chip stat">${STATUS[a.status] || esc(a.status)}</span>` : ""}<span class="chip">${srcName(a.source)}</span>
+    ${wide ? `<span class="qa"><button type="button" data-q="report" title="Report to provider" aria-label="Report to provider">${ic("send")}</button><button type="button" data-q="${a.status === "safe" ? "reopen" : "safe"}" title="${a.status === "safe" ? "Reopen" : "Mark safe"}" aria-label="${a.status === "safe" ? "Reopen" : "Mark safe"}">${ic(a.status === "safe" ? "undo" : "check")}</button></span>` : ""}
+    <span class="sc ${t}">${a.score}%</span></div></li>`;
+}
+const EMPTY = `<div class="empty"><b>No suspicious messages yet</b>Guardian checks new mail automatically. You don't need to do anything.<br><button type="button" class="btn ghost" data-act="sim" data-k="sms_pin">Send a sample alert</button></div>`;
+
+function renderDash() {
+  const ov = S.overview; if (!ov || S.tab !== "dash") return;
+  renderChart();
+  const A = ov.alerts, d = ov.daily, flag = d.map(x => x.flagged), scan = d.map(x => x.scanned), today = d[d.length - 1];
+  $("#k-avg").innerHTML = `<h2 class="ct"><span>Average threat likelihood</span></h2><div class="ring-wrap">${ring(A.avg_score, 150, 9, A.total ? COL[tone(A.avg_score)] : "#d7deea")}<div class="mid"><span class="num">${A.total ? A.avg_score + "%" : "–"}</span><small>${A.total ? "across alerts" : "no alerts yet"}</small></div></div>
+    <div class="two"><div class="r"><span>High risk</span><b>${A.high}</b></div><div><span>Medium risk</span><b style="color:var(--amber)">${A.medium}</b></div><div class="b"><span>Top score</span><b>${A.total ? A.top_score + "%" : "–"}</b></div></div>`;
+  $("#k-today").innerHTML = `<h2 class="ct"><span>Flagged today</span></h2><div class="row"><span class="num">${today.flagged}</span>${spark(flag.slice(7), "#fff", 120, 56)}</div>`;
+  $("#k-scanned").innerHTML = `<h2 class="ct"><span>Messages checked today</span></h2><div class="row"><span class="num" style="color:var(--blue)">${today.scanned}</span>${spark(scan.slice(7), COL.blue, 120, 56)}</div>`;
+  const live = S.alerts.filter(a => a.status !== "safe"), recent = [...live].sort((a, b) => b.ts - a.ts).slice(0, 6);
+  $("#r-top").innerHTML = `<div><div class="mu small">This week</div><span class="num">${sum(flag.slice(7))}</span><span class="mu small"> flagged</span>${spark(flag.slice(7), COL.blue, 84, 26)}</div><div><div class="mu small">Previous week</div><span class="num prev">${sum(flag.slice(0, 7))}</span><span class="mu small"> flagged</span>${spark(flag.slice(0, 7), "#c4ccdb", 84, 26)}</div>`;
+  $("#r-list").innerHTML = recent.length ? recent.map(a => row(a, false)).join("") : EMPTY;
+  const rv = A.needs_review, tot = Math.max(1, A.total);
+  $("#k-review").innerHTML = `<h2 class="ct red"><span>Waiting for you</span></h2><div class="ring-wrap">${ring(A.total ? 100 * rv / tot : 0, 150, 9, rv ? COL.high : COL.low)}<div class="mid"><span class="num">${rv}</span><small>to review</small></div></div>
+    <div class="two"><div class="b"><span>Reported</span><b>${A.reported}</b></div><div><span>Marked safe</span><b>${A.marked_safe}</b></div><div><span>All time</span><b>${A.total}</b></div></div>`;
+  const mxT = Math.max(1, ...ov.types.map(t => t.count));
+  $("#k-types").innerHTML = ov.types.length ? ov.types.slice(0, 5).map(t => `<div class="hbar ${tone(t.avg_score) === "high" ? "h" : "m"}"><div class="l"><b>${esc(t.type)}</b><span>${t.count} · avg ${t.avg_score}%</span></div><div class="t"><i style="width:${100 * t.count / mxT}%"></i></div></div>`).join("") : '<span class="mu small">Nothing flagged yet.</span>';
+  $("#k-rep").innerHTML = ov.repeat_senders.length ? ov.repeat_senders.map(s => `<div class="r"><span title="${esc(s.sender)}">${esc(s.sender)}</span><span class="pill high">${s.count}× · ${s.max_score}%</span></div>`).join("") : '<span class="mu small">No sender has been flagged more than once.</span>';
+}
+
+/* ---------- alerts tab ---------- */
+function visibleAlerts() {
+  const f = S.filter, q = S.q.trim().toLowerCase();
+  let L = S.alerts.filter(a => f === "all" || (f === "new" && a.status === "new") || (f === "reported" && /reported|report_prepared/.test(a.status)) || (f === "safe" && a.status === "safe"));
+  if (q) L = L.filter(a => [a.sender, a.subject, a.threat_type, a.source, a.reason].join(" ").toLowerCase().includes(q));
+  return L.sort(S.sort === "score" ? (a, b) => b.score - a.score || b.ts - a.ts : (a, b) => b.ts - a.ts);
+}
+function renderAlerts() {
+  if (S.tab !== "alerts") return;
+  const c = {all: S.alerts.length, new: 0, reported: 0, safe: 0}; S.alerts.forEach(a => { if (a.status === "new") c.new++; else if (a.status === "safe") c.safe++; else c.reported++; });
+  const keep = document.activeElement?.id === "f-q" ? document.activeElement.selectionStart : null;
+  $("#f-bar").innerHTML = [["all", "All"], ["new", "Needs review"], ["reported", "Reported"], ["safe", "Marked safe"]].map(([k, l]) => `<button type="button" class="fchip" data-f="${k}" aria-pressed="${S.filter === k}">${l} ${c[k]}</button>`).join("")
+    + `<span style="flex:1"></span><label class="sr" for="f-q">Search alerts</label><input class="field" id="f-q" type="search" placeholder="Search sender, subject or type" value="${esc(S.q)}" style="width:240px;max-width:100%"><label class="sr" for="f-s">Sort</label><select class="field" id="f-s"><option value="score" ${S.sort === "score" ? "selected" : ""}>Highest likelihood first</option><option value="time" ${S.sort === "time" ? "selected" : ""}>Newest first</option></select>`;
+  if (keep !== null) { const i = $("#f-q"); i.focus(); i.setSelectionRange(keep, keep); }
+  const L = visibleAlerts();
+  $("#a-list").innerHTML = L.length ? L.slice(0, S.limit).map(a => row(a, true)).join("") : (S.alerts.length ? '<div class="empty"><b>Nothing matches</b>Try a different filter or search.</div>' : EMPTY);
+  $("#a-more").classList.toggle("hide", L.length <= S.limit);
+}
+$("#f-bar").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (b) { S.filter = b.dataset.f; S.limit = 50; renderAlerts(); } });
+$("#f-bar").addEventListener("input", e => { if (e.target.id === "f-q") { S.q = e.target.value; S.limit = 50; renderAlerts(); } });
+$("#f-bar").addEventListener("change", e => { if (e.target.id === "f-s") { S.sort = e.target.value; renderAlerts(); } });
+$("#a-more").onclick = () => { S.limit += 50; renderAlerts(); };
+
+/* row clicks (dashboard and alerts tab) */
+document.addEventListener("click", async e => {
+  const q = e.target.closest("[data-q]");
+  if (q) { e.stopPropagation(); const id = q.closest("[data-open]").dataset.open; q.dataset.q === "report" ? doReport(id) : q.dataset.q === "safe" ? doSafe(id) : doReopen(id); return; }
+  const r = e.target.closest("[data-open]"); if (r) openAlert(r.dataset.open);
+});
+document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".arow")) { e.preventDefault(); openAlert(e.target.dataset.open); } if (e.key === "Escape" && S.openId) closeDrawer(); });
+
+/* ---------- actions ---------- */
+async function doReport(id) {
+  const r = await api(`/api/alerts/${id}/report`);
+  if (r.error) return toast(r.error);
+  toast(r.sent ? "Report sent." : `Report saved in the outbox folder. Nothing was sent (webhook: ${r.webhook}; email: ${r.email}).`);
+  await refresh(true);
+}
+async function doSafe(id) { await api(`/api/alerts/${id}/safe`); toast("Marked safe. It no longer counts as a threat.", () => doReopen(id, true)); await refresh(true); }
+async function doReopen(id, quiet) { await api(`/api/alerts/${id}/reopen`); if (!quiet) toast("Alert reopened."); await refresh(true); }
+
+/* ---------- detail view (drawer + "Check a message") ---------- */
+const H = {urgency: 30, authority: 210, fear_loss: 0, reward_lure: 140, secrecy: 280, credential_request: 330, payment_request: 50, call_to_action: 180, suspicious_link: 260, synthetic_media: 300};
+const PRI = ["credential_request", "payment_request", "suspicious_link", "synthetic_media", "urgency", "fear_loss", "authority", "reward_lure", "secrecy", "call_to_action"];
+function hl(text, dna) {
+  const ch = new Array(text.length).fill(null);
+  for (const k of PRI) { const d = dna.find(x => x.tactic == k); if (d) for (const e of d.evidence) for (let i = e.span[0]; i < e.span[1]; i++) if (ch[i] == null) ch[i] = k; }
+  let o = "", i = 0;
+  while (i < text.length) { const k = ch[i]; let j = i; while (j < text.length && ch[j] === k) j++; const t = esc(text.slice(i, j)); o += k ? `<mark style="--h:${H[k]}">${t}</mark>` : t; i = j; }
+  return o;
+}
+function view(a, text, host, ctx) {
+  let ptr = a.replay ? a.replay.pointer : 0, msg = "";
+  const tg = a.trust_gap, ts = a.threat_score;
+  function draw() {
+    const band = tg.adjusted_band, t = ts ? tone(ts.percent) : "low";
+    let h = `<div class="blk"><div class="score">${ts ? `<div class="ring-wrap" style="margin:0">${ring(ts.percent, 116, 9, COL[t])}<div class="mid"><span class="num" style="font-size:30px">${ts.percent}%</span></div></div>` : ""}
+      <div><div class="big">${ts ? esc(ts.level) : esc(a.label)}</div><div class="tags">${a.incident ? `<span class="pill high">Already happened: ${esc(a.incident.title)}</span>` : ""}<span class="pill ${a.label === "Suspicious" ? "high" : "low"}">${esc(a.label)}</span><span class="pill plain">${esc(a.threat_type)}</span><span class="pill ${band === "High" ? "high" : band === "Medium" ? "med" : "low"}">${band} risk${tg.band_changed ? " (adjusted)" : ""}</span></div></div></div>
+      <p class="why">${esc(a.reason)}</p><div class="act">${esc(a.action)}</div></div>`;
+    if (ts) h += `<div class="blk"><h4>Why this score</h4>${ts.factors.map(f => `<div class="fac"><b>${esc(f.label)}</b><span class="d">${esc(f.detail)}</span><div class="t" title="${f.strength}%"><i style="width:${f.strength}%"></i></div></div>`).join("")}<p class="note">${esc(ts.note)} The percentage shows how likely the message is a threat; the risk level also considers how hard the request would be to undo.</p></div>`;
+    if ((a.email_signals || []).length) h += `<div class="blk"><h4>Technical evidence</h4><ul class="ev">${a.email_signals.map(s => `<li><span class="sev s${s.severity}"></span>${esc(s.text)} <span class="mu small">(severity ${s.severity} of 3)</span></li>`).join("")}</ul></div>`;
+    h += `<div class="blk"><h4>Threat DNA: the tactics, on the exact words</h4><div class="msg">${hl(text, a.dna)}</div>${a.dna.map(d => `<span class="tag ${d.strength == "absent" ? "absent" : ""}" style="--h:${H[d.tactic]}">${esc(d.name)} · ${d.strength}</span>`).join("")}</div>`;
+    if (a.incident) { const I = a.incident; h += `<div class="blk"><h4 class="red">First-hour plan</h4><ol>${I.plan.map(p => `<li><b>${esc(p.when)}:</b> ${esc(p.step)}</li>`).join("")}</ol><p><b>Keep as evidence:</b> ${I.evidence.map(esc).join(", ")}</p><p class="mu small">Draft report (edit the brackets):</p><textarea class="field" style="min-height:140px">${esc(I.report_draft)}</textarea><p class="note">${esc(I.notice)}</p></div>`; }
+    if (a.replay) { const R = a.replay, rc = R.stages[ptr].recoverable;
+      h += `<div class="blk"><h4>Attack Replay: ${esc(R.title)}</h4><div class="mu small">${esc(R.label)}</div><div class="chain">${R.stages.map(s => `<div class="stg ${s.i == ptr ? "on" : ""}">${s.i + 1}. ${esc(s.name)}</div>`).join("")}</div>
+      <div class="row"><span class="mu small">You decide:</span>${["click", "reply", "ignore", "report"].map(k => `<button type="button" class="btn line sm" data-c="${k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}<button type="button" class="btn ghost sm" data-c="next">Next stage</button></div>
+      <div class="stage">${msg ? "<b>" + esc(msg) + "</b><br>" : ""}${esc(R.stages[ptr].text)}</div><div class="rec r${rc.level}"><b>Still recoverable?</b> ${esc(rc.text)}${rc.local ? " <i>(local procedure: to be verified)</i>" : ""}</div></div>`; }
+    h += `<div class="blk"><h4>Trust gap: what you would need before trusting it</h4><ul class="plain-list">${tg.missing_evidence.map(m => `<li>${esc(m)}</li>`).join("")}</ul>
+      <label class="chk"><input type="checkbox" data-t="sender_verified" ${tg.toggles.sender_verified ? "checked" : ""}> I confirmed the sender through an official channel</label><label class="chk"><input type="checkbox" data-t="expected" ${tg.toggles.expected ? "checked" : ""}> I was expecting this</label>
+      <p class="note">${esc(tg.rules)}</p>${tg.warning_kept ? '<div class="warn">This message asks for something you cannot take back. The warning stays even if you confirm the sender.</div>' : ""}</div>`;
+    if (a.org) h += `<div class="blk"><h4>Organisation view</h4>${a.org.tags.map(t => `<span class="tag" style="--h:210">${esc(t.name)} ${esc(t.id)}</span>`).join("")}<p class="note">${esc(a.org.note)}</p><p><b>Indicators</b> domains: ${a.org.indicators.domains.map(esc).join(", ") || "none"} · phones: ${a.org.indicators.phones.map(esc).join(", ") || "none"}</p><ul class="plain-list">${a.org.containment.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>`;
+    const top = host.scrollTop; host.innerHTML = h; host.scrollTop = top;
+    $$("[data-c]", host).forEach(b => b.onclick = () => { const c = b.dataset.c, R = a.replay; if (c == "next") { ptr = Math.min(3, ptr + 1); msg = ""; } else { ptr = R.choices[c].pointer; msg = R.choices[c].text; } draw(); });
+    $$("[data-t]", host).forEach(b => b.onchange = async () => {
+      const t = {...tg.toggles, [b.dataset.t]: b.checked};
+      const r = ctx?.id ? await api(`/api/alerts/${ctx.id}/trust`, t)   // stored alert: keeps the technical-evidence band
+                        : await fetch("/analyze", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({text, expected: t.expected, sender_verified: t.sender_verified})}).then(r => r.json()).then(r => r.trust_gap);
+      Object.assign(tg, r); draw();
+    });
+  }
+  draw();
+}
+
+/* ---------- drawer ---------- */
+let lastFocus = null;
+async function openAlert(id) {
+  let A; try { A = await get("/api/alerts/" + id); } catch (e) { return toast("That alert could not be loaded."); }
+  lastFocus = document.activeElement; S.openId = id;
+  $("#d-title").textContent = `${A.threat_type} · ${A.score}% likely a threat`;
+  $("#d-sub").textContent = `From ${A.sender}${A.subject ? " · " + A.subject : ""} · ${ago(A.ts)} · ${srcName(A.source)}`;
+  view(A.payload.analysis, A.payload.analyzed_text, $("#d-body"), {id});
+  $("#d-body").scrollTop = 0; footer(A);
+  $("#shell").className = "open"; $("#drawer").focus(); renderLists();
+}
+function footer(A) {
+  const f = $("#d-foot");
+  f.innerHTML = `<button type="button" class="btn" data-x="report">${ic("send")}Report to provider</button>${A.status === "safe" ? `<button type="button" class="btn line" data-x="reopen">${ic("undo")}Reopen</button>` : `<button type="button" class="btn line" data-x="safe">${ic("check")}Mark safe</button>`}<span class="mu small" style="align-self:center">${STATUS[A.status] || ""}</span>`;
+  $$("[data-x]", f).forEach(b => b.onclick = async () => { const x = b.dataset.x; await (x === "report" ? doReport : x === "safe" ? doSafe : doReopen)(A.id); footer(await get("/api/alerts/" + A.id)); });
+}
+function closeDrawer() { S.openId = null; $("#shell").className = ""; renderLists(); lastFocus?.focus?.(); }
+$("#scrim").onclick = closeDrawer; $("#d-x").onclick = closeDrawer;
+function renderLists() { renderDash(); renderAlerts(); }
+
+/* ---------- check a message ---------- */
+$("#go").onclick = async () => {
+  const t = $("#in").value.trim(); if (!t) return $("#in").focus();
+  const r = await fetch("/analyze", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({text: t, reading_level: $("#lvl").value, mode: $("#mode").value})}).then(r => r.json());
+  if (r.error) { $("#res").innerHTML = `<div class="blk"><div class="warn">${esc(r.error)}</div></div>`; return; }
+  view(r, t, $("#res"));
+};
+
+/* ---------- settings ---------- */
+function renderSettings() {
+  if (S.tab !== "settings" || !S.status) return; const st = S.status;
+  $("#st-src").innerHTML = (st.monitors.length ? st.monitors.map(m => `<div class="src"><span class="d ${esc(m.state)}"></span><span><b>${esc(m.name)}</b> · ${esc(m.state)}${m.error ? " · " + esc(m.error) : ""}<br><span class="mu small">${m.last_check ? "Last check " + esc(m.last_check) + " · " : ""}${m.processed} read</span></span></div>`).join("") : '<p class="mu small">No monitors running.</p>')
+    + `<p class="mu small">Watch folders: ${st.watch_dirs.map(esc).join(", ")}</p>`;
+  $("#st-chan").textContent = `Webhook: ${st.report_channels.webhook ? "set" : "not set"} · Email: ${st.report_channels.email ? "set" : "not set"}`;
+  $("#ing").textContent = location.origin + "/ingest";
+}
+$("#whs").onclick = async () => { await api("/api/settings", {report_webhook: $("#wh").value}); toast("Webhook saved."); refresh(true); };
+
+/* ---------- live data ---------- */
+function floatNew(a) {
+  const f = $("#float");
+  f.innerHTML = `<h2 class="ct"><span>New alert</span></h2><div class="num">${a.score}%</div><p><b>${esc(a.threat_type)}</b> from ${esc(a.sender)}</p>
+    <svg class="wave" viewBox="0 0 260 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0,22 C20,2 36,2 52,18 S86,34 104,16 S140,0 160,18 S200,34 220,14 S250,6 260,12" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <button type="button" class="btn sm" id="f-go">Review alert</button>`;
+  f.classList.add("on"); $("#f-go").onclick = () => { f.classList.remove("on"); openAlert(a.id); };
+  clearTimeout(floatNew.t); floatNew.t = setTimeout(() => f.classList.remove("on"), 10000);
+}
+async function refresh(force) {
+  try {
+    const [st, ov, al] = await Promise.all([get("/api/status"), get("/api/overview"), get("/api/alerts?limit=500")]);
+    S.online = true;
+    const stable = {...st, monitors: st.monitors.map(m => ({name: m.name, state: m.state, error: m.error}))};   // last_check / processed change every poll
+    const sig = JSON.stringify([stable, ov, al]); S.status = st;
+    if (!force && sig === S.sig) { renderMeta(); return; } S.sig = sig;
+    S.overview = ov; S.alerts = al;
+    if (S.known) { const fresh = al.filter(a => !S.known.has(a.id) && a.status === "new").sort((a, b) => b.score - a.score)[0]; if (fresh && S.openId == null) floatNew(fresh); }
+    S.known = new Set(al.map(a => a.id));
+  } catch (e) { S.online = false; }
+  render();
+}
+function render() { renderChrome(); renderDash(); renderAlerts(); renderSettings(); if (S.status && $("#wh") !== document.activeElement && !$("#wh").value) $("#wh").value = ""; }
+setInterval(() => $$("time[data-ts]").forEach(t => t.textContent = ago(+t.dataset.ts)), 30000);
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(renderChart, 120); });
+
+(async () => {
+  try { TOKEN = (await get("/api/session")).token; S.samples = Object.entries(await get("/api/samples")); } catch (e) { S.online = false; }
+  const h = location.hash.slice(1); setTab(["dash", "alerts", "check", "settings"].includes(h) ? h : "dash");
+  await refresh(true); setTimeout(() => document.body.classList.remove("intro"), 1600);
+  setInterval(() => refresh(false), 4000);
+})();
+</script>
+</body>
+</html>
